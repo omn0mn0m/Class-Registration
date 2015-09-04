@@ -7,7 +7,6 @@ import com.gargoylesoftware.htmlunit.BrowserVersion;
 import com.gargoylesoftware.htmlunit.WebClient;
 import com.gargoylesoftware.htmlunit.html.DomElement;
 import com.gargoylesoftware.htmlunit.html.HtmlForm;
-import com.gargoylesoftware.htmlunit.html.HtmlInput;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
 import com.gargoylesoftware.htmlunit.html.HtmlPasswordInput;
 import com.gargoylesoftware.htmlunit.html.HtmlSubmitInput;
@@ -17,6 +16,8 @@ public class Main {
 	
 	static WebClient webClient = new WebClient(BrowserVersion.FIREFOX_38);
 	static HtmlPage registrationPage;
+	
+	static final boolean DEBUG = false;
 
 	public static void main(String[] args) throws Exception {
 		login();
@@ -83,7 +84,13 @@ public class Main {
 					((List<HtmlTextInput>)inputFields).get(i).setValueAttribute(Values.CRN[i]);
 				}
 				
-				
+				if (!DEBUG) {
+					final List<?> submitButton = registrationPage.getByXPath("//input [@type='submit'] [@name='REG_BTN'] [@value='Submit Changes']");
+					
+					if (submitButton.size() != 0) {
+						registrationPage = ((HtmlSubmitInput)submitButton.get(0)).click();
+					}
+				}
 				
 				System.out.println("All done.");
 			} else {
