@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.List;
 
 import com.gargoylesoftware.htmlunit.BrowserVersion;
+import com.gargoylesoftware.htmlunit.ScriptException;
 import com.gargoylesoftware.htmlunit.WebClient;
 import com.gargoylesoftware.htmlunit.html.DomElement;
 import com.gargoylesoftware.htmlunit.html.HtmlForm;
@@ -14,12 +15,22 @@ import com.gargoylesoftware.htmlunit.html.HtmlTextInput;
 
 public class Main {
 	
+	static Values values = new Values();
+	
 	static WebClient webClient = new WebClient(BrowserVersion.FIREFOX_38);
 	static HtmlPage registrationPage;
 	
 	static final boolean DEBUG = false;
+	
+	static boolean regWindowOpen;
+	static boolean loggedIn;
+	
+	static final int MAX_ATTEMPTS = 100;
 
 	public static void main(String[] args) throws Exception {
+		System.out.println("Press ENTER to start...");
+		System.in.read();
+		
 		login();
 		navigateToRegistration();
 		spam();
@@ -33,13 +44,15 @@ public class Main {
 		final HtmlForm form = registrationPage.getFormByName("loginform");
 
 		final HtmlPasswordInput usernameField = form.getInputByName("sid");
-		usernameField.setValueAttribute(Values.GWID);
+		usernameField.setValueAttribute(values.GWID);
 
 		final HtmlPasswordInput passwordField = form.getInputByName("PIN");
-		passwordField.setValueAttribute(Values.PIN);
+		passwordField.setValueAttribute(values.PIN);
 
 		final HtmlSubmitInput button = form.getInputByValue("Login");
 		registrationPage = button.click();
+		
+		loggedIn = true;
 	}
 	
 	public static void navigateToRegistration() {
@@ -60,46 +73,80 @@ public class Main {
 				System.exit(0);
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
-			System.exit(0);
+			
 		}
 	}
 	
 	@SuppressWarnings("unchecked")
 	public static void spam() {
-		System.out.println("Spamming...");
+		boolean registered = false;
+		int attempts = 0;
 		
-		try {
-			registrationPage.refresh();
-		} catch (IOException e1) {
-			e1.printStackTrace();
-			System.exit(0);
-		}
-		
-		try {
-			final List<?> inputFields = registrationPage.getByXPath("//input [@type='text'] [@name='CRN_IN'] [@size='6'] [@maxlength='5']");
+		while (!registered) {
+			System.out.print("Spamming... ");
 			
-			if (inputFields.size() == 10) {
-				for (int i = 0; i < Values.CRN.length; i++) {
-					((List<HtmlTextInput>)inputFields).get(i).setValueAttribute(Values.CRN[i]);
-				}
-				
-				if (!DEBUG) {
-					final List<?> submitButton = registrationPage.getByXPath("//input [@type='submit'] [@name='REG_BTN'] [@value='Submit Changes']");
-					
-					if (submitButton.size() != 0) {
-						registrationPage = ((HtmlSubmitInput)submitButton.get(0)).click();
-					}
-				}
-				
-				System.out.println("All done.");
-			} else {
-				System.out.println("WTF");
+			try {
+				registrationPage.refresh();
+				regWindowOpen = true;
+			} catch (Exception e) {
+				regWindowOpen = false;
 			}
-		} catch (Exception e) {
-			e.printStackTrace();
-			System.out.println("Trying again...");
-			spam();
+			
+			if (loggedIn) {
+				try {
+					final List<?> inputFields = registrationPage
+							.getByXPath("//input [@type='text'] [@name='CRN_IN'] [@size='6'] [@maxlength='5']");
+
+					if (inputFields.size() >= values.CRN.length) {
+						for (int i = 0; i < values.CRN.length; i++) {
+							((List<HtmlTextInput>) inputFields).get(i)
+									.setValueAttribute(values.CRN[i]);
+							System.out
+									.println(((List<HtmlTextInput>) inputFields)
+											.get(i).getValueAttribute()
+											+ " typed in...");
+						}
+
+						final List<?> submitButton = registrationPage
+								.getByXPath("//input [@type='submit'] [@name='REG_BTN'] [@value='Submit Changes']");
+
+						if (submitButton.size() != 0) {
+							if (!DEBUG) {
+								registrationPage = ((HtmlSubmitInput) submitButton
+										.get(0)).click();
+							}
+
+							System.out.println("Courses submitted...");
+						} else {
+							System.out.println("Submit button not found...");
+						}
+
+						registered = true;
+						System.out.println("All done.");
+					} else {
+						if (registrationPage.getTitleText().equals("403 Forbidden") || (registrationPage.getByXPath("//form [@name='loginform']").size() != 0)) {
+							System.out.println("Need to log back in...");
+							login();
+							navigateToRegistration();
+							spam();
+						} else {
+							System.out.println("Registration Window not open...");
+							attempts++;
+							
+							if (attempts >= MAX_ATTEMPTS) {
+								System.out.println("Max attempts reached... Need to log back in...");
+								login();
+								navigateToRegistration();
+								spam();
+							}
+						}
+					}
+				} catch (Exception e) {
+					System.out.println("Trying again...");
+				}
+			} else if (!loggedIn) {
+				
+			}
 		}
 	}
 	
