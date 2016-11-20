@@ -25,7 +25,7 @@ public class Main {
 	static boolean regWindowOpen;
 	static boolean loggedIn;
 	
-	static final int MAX_ATTEMPTS = 100;
+	static final int MAX_ATTEMPTS = 75;
 
 	public static void main(String[] args) throws Exception {
 		System.out.println("Press ENTER to start...");
@@ -43,14 +43,10 @@ public class Main {
 
 		final HtmlForm form = registrationPage.getFormByName("loginform");
 
-		final HtmlPasswordInput usernameField = form.getInputByName("sid");
-		usernameField.setValueAttribute(values.GWID);
+		form.getInputByName("sid").setValueAttribute(values.GWID);
+		form.getInputByName("PIN").setValueAttribute(values.PIN);
 
-		final HtmlPasswordInput passwordField = form.getInputByName("PIN");
-		passwordField.setValueAttribute(values.PIN);
-
-		final HtmlSubmitInput button = form.getInputByValue("Login");
-		registrationPage = button.click();
+		registrationPage = form.getInputByValue("Login").click();
 		
 		loggedIn = true;
 	}
@@ -78,21 +74,22 @@ public class Main {
 	}
 	
 	@SuppressWarnings("unchecked")
-	public static void spam() {
+	public static void spam() throws Exception {
 		boolean registered = false;
 		int attempts = 0;
 		
 		while (!registered) {
-			System.out.print("Spamming... ");
-			
-			try {
-				registrationPage.refresh();
-				regWindowOpen = true;
-			} catch (Exception e) {
-				regWindowOpen = false;
-			}
-			
 			if (loggedIn) {
+				
+				System.out.print("Spamming... ");
+				
+				try {
+					registrationPage.refresh();
+					regWindowOpen = true;
+				} catch (Exception e) {
+					regWindowOpen = false;
+				}
+				
 				try {
 					final List<?> inputFields = registrationPage
 							.getByXPath("//input [@type='text'] [@name='CRN_IN'] [@size='6'] [@maxlength='5']");
@@ -126,26 +123,25 @@ public class Main {
 					} else {
 						if (registrationPage.getTitleText().equals("403 Forbidden") || (registrationPage.getByXPath("//form [@name='loginform']").size() != 0)) {
 							System.out.println("Need to log back in...");
-							login();
-							navigateToRegistration();
-							spam();
+							loggedIn = false;
 						} else {
 							System.out.println("Registration Window not open...");
 							attempts++;
 							
 							if (attempts >= MAX_ATTEMPTS) {
 								System.out.println("Max attempts reached... Need to log back in...");
-								login();
-								navigateToRegistration();
-								spam();
+								loggedIn = false;
 							}
 						}
 					}
 				} catch (Exception e) {
-					System.out.println("Trying again...");
+					System.out.println("Unexpected error... Trying again from the beginning");
+					loggedIn = false;
 				}
 			} else if (!loggedIn) {
-				
+				login();
+				navigateToRegistration();
+				spam();
 			}
 		}
 	}
