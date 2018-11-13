@@ -17,7 +17,7 @@ public class Main {
 	
 	static Values values = new Values();
 	
-	static WebClient webClient = new WebClient(BrowserVersion.FIREFOX_38);
+	static WebClient webClient = new WebClient(BrowserVersion.FIREFOX_52);
 	static HtmlPage registrationPage;
 	
 	static final boolean DEBUG = false;
@@ -39,7 +39,7 @@ public class Main {
 	
 	public static void login() throws Exception {
 		System.out.println("Logging in...");
-		registrationPage = webClient.getPage("http://banweb.gwu.edu/PRODCartridge/twbkwbis.P_WWWLogin");
+		registrationPage = webClient.getPage("https://banweb.gwu.edu/PRODCartridge/twbkwbis.P_WWWLogin");
 
 		final HtmlForm form = registrationPage.getFormByName("loginform");
 
@@ -47,6 +47,25 @@ public class Main {
 		form.getInputByName("PIN").setValueAttribute(values.PIN);
 
 		registrationPage = form.getInputByValue("Login").click();
+		
+		if (values.SECRET != null && !values.SECRET.isEmpty()) {
+			System.out.println("Login 1/2 complete...");
+			
+			final HtmlForm form_val = registrationPage.getFormByName("answerform");
+			
+			form_val.getInputByName("answer").setValueAttribute(values.SECRET);
+			HtmlSubmitInput button = (HtmlSubmitInput)form_val.getByXPath("//input[@type='submit']").get(0);
+			registrationPage = button.click();
+			
+			System.out.println("Login 2/2 complete...");
+		} else {
+			if (registrationPage.getUrl().toString().equals("https://banweb.gwu.edu/PRODCartridge/twbkwbis.P_ValLogin")) {
+				System.out.println("Oops... you need a security answer... Bye!");
+				System.exit(0);
+			}
+			
+			System.out.println("Login complete...");
+		}
 		
 		loggedIn = true;
 	}

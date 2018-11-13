@@ -11,6 +11,7 @@ public class Values {
 	
 	public String GWID;
 	public String PIN;
+	public String SECRET;
 	
 	public String[] CRN;
 	
@@ -24,7 +25,13 @@ public class Values {
 		GWID = input.nextLine();
 		PIN = input.nextLine();
 		
-		System.out.println("GWID: " + GWID + " | PIN: " + PIN);
+		if (input.hasNextLine()) {
+			SECRET = input.nextLine();
+		} else {
+			SECRET = null;
+		}
+		
+//		System.out.println("GWID: " + GWID + " | PIN: " + PIN + " | SECRET: " + SECRET);
 		
 		try {
 			input = new Scanner(new File("resources/crns.txt"));

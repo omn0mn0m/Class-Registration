@@ -13,6 +13,7 @@ The format of each file is as follows
 ```
 GWID
 Password
+Secret Question Answer (if you have one)
 ```
 
 ## crns.txt
