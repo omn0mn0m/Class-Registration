@@ -19,7 +19,8 @@ public class Values {
 		try {
 			input = new Scanner(new File("resources/login.txt"));
 		} catch (FileNotFoundException e) {
-			System.out.println("Login credentials file not found...");
+			System.out.println("Login credentials file not found... See https://github.com/omn0mn0m/Class-Registration");
+			System.exit(0);
 		}
 		
 		GWID = input.nextLine();
@@ -36,7 +37,8 @@ public class Values {
 		try {
 			input = new Scanner(new File("resources/crns.txt"));
 		} catch (FileNotFoundException e) {
-			System.out.println("CRNs file not found...");
+			System.out.println("CRNs file not found...  See https://github.com/omn0mn0m/Class-Registration");
+			System.exit(0);
 		}
 		
 		CRN = new String[Integer.parseInt(input.nextLine())];
